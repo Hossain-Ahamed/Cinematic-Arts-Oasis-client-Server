@@ -57,8 +57,8 @@ const verifyJWT = (req, res, next) => {
             console.log("Auth code was Invalid ")
             return res.status(403).send({ error: true, message: "Unauthorized Access || Invalid Token" });
         }
-        // console.log("error hoyn")
-        req.decoded = decoded;
+
+        req.email = decoded?.email;
         next();
 
     })
@@ -123,15 +123,15 @@ async function run() {
 
 
         // find the profile data 
-        app.get('/get-profile/:email', async (req, res) => {
+        app.get('/get-profile/:email',verifyJWT, async (req, res) => {
             const email = req.params.email;
             const user = await allUserDataCollection.findOne({ email: email });
 
             if (!user) {
-                return  res.status(200).send({dataFound : false})
+                return res.status(200).send({ dataFound: false })
             }
 
-           return res.status(200).send({...user,dataFound : true})
+            return res.status(200).send({ ...user, dataFound: true })
 
         })
 
@@ -145,7 +145,7 @@ async function run() {
                 phone,
                 firebase_UID,
             } = data;
-         
+
 
             const exist = await allUserDataCollection.findOne({ email: data?.email });
 
@@ -168,15 +168,24 @@ async function run() {
         })
 
 
-        // Update profile to all-user-colection
-        app.patch('/update-user-profile/:email', async (req, res) => {
-            const data = req.body;
-         
+        // Update profile to all-user-colectio
+        app.patch('/update-user-profile/:email', verifyJWT,async (req, res) => {
+            try {
+                console.log(req.email)
+                if(req.email !== req.params.email){
+                    return  res.status(401).send({message : "Unauthorized    "});
+                }
+                const data = req.body;
+                const result = await allUserDataCollection.updateOne({ email: req.params.email }, { $set: data });
 
-            const result = await allUserDataCollection.updateOne({ email: req.params.email },{$set : data});
 
-    
-            res.status(200).send(result);
+                res.status(200).send(result);
+            }catch{
+                e=>{
+                    res.status(500).send({message : "internal server error"});
+                }
+            }
+           
         })
 
     } finally {
