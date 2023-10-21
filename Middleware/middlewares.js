@@ -19,16 +19,26 @@ const verifyJWT = (req, res, next) => {
             return res.status(403).send({ error: true, message: "Unauthorized Access || Invalid Token" });
         }
 
-        req.email = decoded?.email;
+        req.data = decoded;
         next();
 
     })
 
 }
+const veryifyByRole = (allowedRoles) => {
+    return (req, res, next) => {
+        const {email,role} = req.data;
+  
+        if(!email || !allowedRoles.includes(role)){
+            res.status(403).send({data: "unauthorized access || veryifyByRole "})
+        }
+        next();
+    }
+}
 
 
-
-module.exports ={
+module.exports = {
     verifyJWT,
-    
+    veryifyByRole
+
 }

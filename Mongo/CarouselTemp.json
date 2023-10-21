@@ -1,0 +1,22 @@
+[
+    {
+        "title": "Slide 1",
+        "content": "This is the content for Slide 1.",
+        "image": "https://i.ibb.co/27fp0zG/caoursel-1.jpg"
+    },
+    {
+        "title": "Slide 2",
+        "content": "This is the content for Slide 2.",
+        "image": "https://i.ibb.co/m4zYYZc/caoursel-2.jpg"
+    },
+    {
+        "title": "Slide 3",
+        "content": "This is the content for Slide 3.",
+        "image": "https://i.ibb.co/vHWtvS5/caoursel-3.jpg"
+    },
+    {
+        "title": "Slide 4",
+        "content": "This is the content for Slide 4.",
+        "image": "https://i.ibb.co/sWg9t4s/carousel-4.jpg"
+    }
+]
