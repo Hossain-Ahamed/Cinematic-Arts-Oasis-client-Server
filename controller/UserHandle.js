@@ -7,6 +7,7 @@ const { allUserDataCollection } = require('../Mongo/DataCollection');
 const FindTheProfileData = async (req, res) => {
     try {
         const email = req.params.email;
+        // console.log(req.params)
         const user = await allUserDataCollection.findOne({ email: email });
 
         if (!user) {
@@ -63,6 +64,27 @@ const UpdateUserProfileController = async (req, res) => {
 
         if (req.data?.email !== req.params.email) {
             return res.status(401).send({ message: "Unauthorized    ||  from UpdateUserProfileController" });
+        }
+        const data = req.body;
+        const result = await allUserDataCollection.updateOne({ email: req.params.email }, { $set: data });
+
+
+        res.status(200).send(result);
+    } catch {
+        e => {
+            res.status(500).send({ message: "internal server error UpdateUserProfileController" });
+        }
+    }
+
+}
+
+
+// Update profile to all-user-colection by admin
+const UpdateUserProfileControllerByAdmin = async (req, res) => {
+    try {
+
+        if (!req.params.email) {
+            return res.status(404).send({ message: "Unauthorized    ||  from UpdateUserProfileController" });
         }
         const data = req.body;
         const result = await allUserDataCollection.updateOne({ email: req.params.email }, { $set: data });
@@ -162,5 +184,6 @@ module.exports = {
     FindTheProfileData,
     getThe_at_JWT,
     signInUploadDataController,
-    UpdateUserProfileController
+    UpdateUserProfileController,
+    UpdateUserProfileControllerByAdmin
 }

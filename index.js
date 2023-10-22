@@ -55,11 +55,13 @@ app.use(cors(corsOptions));
 //---------------------routes import---------------------------------------------------
 const UserHandle_Route = require('./Routes/HandleUserRoute');
 const Carousel_Route = require('./Routes/HandleCaoruselRoute');
+const class_Route = require('./Routes/HandleClassRoute');
 
 
 // Use the route modules
 app.use('/oasis', UserHandle_Route); // routes for authentication
 app.use('/oasis', Carousel_Route); // routes for authentication
+app.use('/oasis', class_Route); // routes for clases
 
 
 
