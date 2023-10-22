@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const process = require('process');
-const { allUserDataCollection, cartCollection } = require('../Mongo/DataCollection');
+const { allUserDataCollection, cartCollection, classInfoCollection, followCollection } = require('../Mongo/DataCollection');
+const { ObjectId } = require('mongodb');
 
 
 // find the profile data 
@@ -22,6 +23,35 @@ const FindTheProfileData = async (req, res) => {
 
 
 }
+
+// get all isntructor
+const getAllInstructor = async (req, res) => {
+    try {
+        // Retrieve the instructors' data from allUserDataCollection
+        const instructors = await allUserDataCollection.find({ role: "Instructor" }).toArray();
+
+        if (!instructors || instructors.length === 0) {
+            return res.status(200).send({ dataFound: false });
+        }
+
+        // Map over the instructors and fetch classInfo data for each instructor
+        const instructorsWithClassInfo = await Promise.all(
+            instructors.map(async (instructor) => {
+                const classInfoData = await classInfoCollection.findOne({ email: instructor.email });
+                return {
+                    ...instructor,
+                    classInfo: classInfoData?.classId,
+                };
+            })
+        );
+
+        res.status(200).send(instructorsWithClassInfo);
+    } catch (error) {
+        console.error('Error while getting the profile:', error);
+        res.status(500).send({ error: 'Internal server error FindTheProfileData' });
+    }
+};
+
 
 
 // Upload new profile to all-user-colection
@@ -100,39 +130,39 @@ const UpdateUserProfileControllerByAdmin = async (req, res) => {
 
         const data = req.body;
 
-        const prevData = await allUserDataCollection.findOne({email : email});
+        const prevData = await allUserDataCollection.findOne({ email: email });
 
-console.log(data.role,prevData?.role)
-        if(data.role !==prevData?.role){
+        console.log(data.role, prevData?.role)
+        if (data.role !== prevData?.role) {
             if (data.role === 'Admin' || data.role === 'Instructor') {
                 // If the role is 'Admin' or 'Instructor', remove 'following' and 'cartID' from the user's document
                 const update = {
                     $set: data,
                     $unset: { following: "", cartID: "" }
                 };
-                await cartCollection.deleteOne({email : email});
+                await cartCollection.deleteOne({ email: email });
                 await allUserDataCollection.updateOne({ email: req.params.email }, update);
             } else {
-    
+
                 const cartDoc = {
                     email: email,
                     items: [],
                 };
                 const cartInsertResult = await cartCollection.insertOne(cartDoc);
-    
+
                 // Get the generated _id of the newly inserted cart document
                 const newCartID = cartInsertResult.insertedId;
-    
-                data.following= [];
+
+                data.following = [];
                 data.cartID = newCartID
-    
+
                 // If the role is not 'Admin' or 'Instructor, update the user's profile without removing fields
                 await allUserDataCollection.updateOne({ email: req.params.email }, { $set: data });
             }
-        }else{
+        } else {
             await allUserDataCollection.updateOne({ email: req.params.email }, { $set: data });
         }
-       
+
 
         res.status(200).send({ message: "Profile updated successfully" });
     } catch (err) {
@@ -232,8 +262,33 @@ const getThe_at_JWT = async (req, res) => {
 }
 
 
+//follow isntructor
+const followInstructor = async (req, res) => {
 
+    const { insID, type,_id } = req.body;
+    const data = {
+        stdID : _id,
+        insID : insID
+    }
+    if (type === "follow") {
+        await allUserDataCollection.updateOne({_id : new ObjectId(_id), role: "Student"}, 
+        {
+            $push : {following : insID }
+        })
 
+        
+
+        await followCollection.insertOne(data)
+    } else {
+        await allUserDataCollection.updateOne({_id : new ObjectId(_id), role: "Student"}, 
+        {
+            $pull : {following : insID }
+        })
+
+        await followCollection.deleteMany(data)
+    }
+res.status(200).send('true')
+}
 
 const temp = async (req, res) => {
     try {
@@ -283,5 +338,7 @@ module.exports = {
     signInUploadDataController,
     UpdateUserProfileController,
     UpdateUserProfileControllerByAdmin,
+    getAllInstructor,
+    followInstructor,
     temp
 }

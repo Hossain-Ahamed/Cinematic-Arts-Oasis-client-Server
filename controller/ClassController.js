@@ -1,5 +1,5 @@
 const process = require('process');
-const { classCollection ,classInfoCollection} = require('../Mongo/DataCollection');
+const { classCollection, classInfoCollection } = require('../Mongo/DataCollection');
 
 // add class by instructor 
 const Add_A_New_Class = async (req, res) => {
@@ -11,7 +11,7 @@ const Add_A_New_Class = async (req, res) => {
         if (exist) {
             return res.status(409).send({ message: "Class Already Exists by this name" });
         }
-
+        data.status = "Pending"
         // Insert data into the class-data collection
         const classDataResult = await classCollection.insertOne(data);
 
@@ -52,7 +52,7 @@ const getallClasses = async (req, res) => {
     try {
 
 
-        const data = await classCollection.find().sort({ _id: -1 }).toArray();
+        const data = await classCollection.find({ status: "Approved" }).sort({ _id: -1 }).toArray();
 
 
         res.status(200).send(data);

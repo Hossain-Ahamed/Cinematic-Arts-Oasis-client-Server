@@ -1,5 +1,5 @@
 const express = require('express');
-const { FindTheProfileData, getThe_at_JWT, signInUploadDataController, UpdateUserProfileController, getAllUser, UpdateUserProfileControllerByAdmin, temp } = require('../controller/UserHandle');
+const { FindTheProfileData, getThe_at_JWT, signInUploadDataController, UpdateUserProfileController, getAllUser, UpdateUserProfileControllerByAdmin, temp, getAllInstructor, followInstructor } = require('../controller/UserHandle');
 const { verifyJWT, veryifyByRole } = require('../Middleware/middlewares');
 const router = express.Router();
 
@@ -34,6 +34,12 @@ router.patch('/update-user-profile-by-admin/:email', verifyJWT,veryifyByRole(["A
 
 // admin -> get all users
 router.get('/all-users', verifyJWT,veryifyByRole(["Admin"]),getAllUser)
+
+// get all instructor for all 
+router.get('/get-all-instructors',getAllInstructor);
+
+// follow unfollow 
+router.patch('/followings',verifyJWT,veryifyByRole(['Student']),followInstructor);
 
 // router.get('/bal',temp)
 

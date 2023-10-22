@@ -56,12 +56,14 @@ app.use(cors(corsOptions));
 const UserHandle_Route = require('./Routes/HandleUserRoute');
 const Carousel_Route = require('./Routes/HandleCaoruselRoute');
 const class_Route = require('./Routes/HandleClassRoute');
+const order_n_CartRoute = require('./Routes/HandleCart_n_OrdersRoute')
 
 
 // Use the route modules
 app.use('/oasis', UserHandle_Route); // routes for authentication
 app.use('/oasis', Carousel_Route); // routes for authentication
 app.use('/oasis', class_Route); // routes for clases
+app.use('/oasis', order_n_CartRoute); // routes for order and cart
 
 
 
