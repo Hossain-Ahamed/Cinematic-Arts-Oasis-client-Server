@@ -5,10 +5,12 @@ const allUserDataCollection = getCollection('all-user-data');
 
 
 //follower collection
-const followerCollection = getCollection('follow-data')
+const cartCollection = getCollection('carts-data')
 
 
-//follower collection
+//class collection
 const classCollection = getCollection('class-data')
 
-module.exports = { allUserDataCollection,followerCollection,classCollection };
+const classInfoCollection = getCollection('class-info') 
+
+module.exports = { allUserDataCollection,cartCollection,classCollection ,classInfoCollection};

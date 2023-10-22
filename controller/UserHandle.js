@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const process = require('process');
-const { allUserDataCollection } = require('../Mongo/DataCollection');
+const { allUserDataCollection, cartCollection } = require('../Mongo/DataCollection');
 
 
 // find the profile data 
@@ -43,13 +43,24 @@ const signInUploadDataController = async (req, res) => {
     }
 
 
+    const cartDoc = {
+        email: email,
+        items: [],
+    };
+    const cartInsertResult = await cartCollection.insertOne(cartDoc);
+
+    // Get the generated _id of the newly inserted cart document
+    const newCartID = cartInsertResult.insertedId;
+
     const uploadData = {
         name,
         email,
         photoURL,
         phone,
         firebase_UID,
-        role: "Student"
+        role: "Student",
+        cartID: newCartID,
+        following: []
     }
 
     const result = await allUserDataCollection.insertOne(uploadData);
@@ -79,35 +90,66 @@ const UpdateUserProfileController = async (req, res) => {
 }
 
 
-// Update profile to all-user-colection by admin
 const UpdateUserProfileControllerByAdmin = async (req, res) => {
     try {
 
-        if (!req.params.email) {
-            return res.status(404).send({ message: "Unauthorized    ||  from UpdateUserProfileController" });
+        const email = req.params.email
+        if (!email) {
+            return res.status(404).send({ message: "Unauthorized" });
         }
+
         const data = req.body;
-        const result = await allUserDataCollection.updateOne({ email: req.params.email }, { $set: data });
 
+        const prevData = await allUserDataCollection.findOne({email : email});
 
-        res.status(200).send(result);
-    } catch {
-        e => {
-            res.status(500).send({ message: "internal server error UpdateUserProfileController" });
+console.log(data.role,prevData?.role)
+        if(data.role !==prevData?.role){
+            if (data.role === 'Admin' || data.role === 'Instructor') {
+                // If the role is 'Admin' or 'Instructor', remove 'following' and 'cartID' from the user's document
+                const update = {
+                    $set: data,
+                    $unset: { following: "", cartID: "" }
+                };
+                await cartCollection.deleteOne({email : email});
+                await allUserDataCollection.updateOne({ email: req.params.email }, update);
+            } else {
+    
+                const cartDoc = {
+                    email: email,
+                    items: [],
+                };
+                const cartInsertResult = await cartCollection.insertOne(cartDoc);
+    
+                // Get the generated _id of the newly inserted cart document
+                const newCartID = cartInsertResult.insertedId;
+    
+                data.following= [];
+                data.cartID = newCartID
+    
+                // If the role is not 'Admin' or 'Instructor, update the user's profile without removing fields
+                await allUserDataCollection.updateOne({ email: req.params.email }, { $set: data });
+            }
+        }else{
+            await allUserDataCollection.updateOne({ email: req.params.email }, { $set: data });
         }
-    }
+       
 
-}
+        res.status(200).send({ message: "Profile updated successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Internal Server Error" });
+    }
+};
 
 
 //get all user
 const getAllUser = async (req, res) => {
     try {
-        const { search, currentPage, numberOfSizeInTableData} = req.query;
+        const { search, currentPage, numberOfSizeInTableData } = req.query;
 
         let filters = {};
 
-      
+
 
         if (search) {
             filters.$or = [
@@ -133,7 +175,7 @@ const getAllUser = async (req, res) => {
 
         let totalCount = await allUserDataCollection.countDocuments(filters); // Use filters here, not dateFilter
 
-        if(!users){
+        if (!users) {
             users = [];
             totalCount = 0;
         }
@@ -155,13 +197,25 @@ const getThe_at_JWT = async (req, res) => {
     let userDataForJWT = await allUserDataCollection.findOne({ email: email });
 
     if (!userDataForJWT) {
+
+
+        const cartDoc = {
+            email: email,
+            items: [],
+        };
+        const cartInsertResult = await cartCollection.insertOne(cartDoc);
+
+        // Get the generated _id of the newly inserted cart document
+        const newCartID = cartInsertResult.insertedId;
         userDataForJWT = {
             name,
             email,
             photoURL,
             phone,
             firebase_UID,
-            role: "Student"
+            role: "Student",
+            cartID: newCartID,
+            following: []
         }
         await allUserDataCollection.insertOne(userDataForJWT);
 
@@ -179,11 +233,55 @@ const getThe_at_JWT = async (req, res) => {
 
 
 
+
+
+const temp = async (req, res) => {
+    try {
+        // Fetch all user data from the userCollection
+        const users = await allUserDataCollection.find().toArray();
+
+        // Create an array of promises to process user data
+        const promises = users.map(async (user) => {
+            if (user.role !== 'Admin' && user.role !== 'Instructor') {
+                // Create a new document in the cart collection
+                const cartDoc = {
+                    email: user.email,
+                    items: [],
+                };
+                const cartInsertResult = await cartCollection.insertOne(cartDoc);
+
+                // Get the generated _id of the newly inserted cart document
+                const newCartID = cartInsertResult.insertedId;
+
+                // Update the userCollection with the new cartID and an empty following array
+                const update = {
+                    $set: {
+                        cartID: newCartID,
+                        following: [],
+                    },
+                };
+                await allUserDataCollection.updateOne({ _id: user._id }, update);
+            }
+        });
+
+        // Wait for all promises to complete
+        await Promise.all(promises);
+
+        console.log('Process completed.');
+        res.send("hdsjafhhsd")
+    } catch (err) {
+        console.error('Error:', err);
+    }
+};
+
+
+
 module.exports = {
     getAllUser,
     FindTheProfileData,
     getThe_at_JWT,
     signInUploadDataController,
     UpdateUserProfileController,
-    UpdateUserProfileControllerByAdmin
+    UpdateUserProfileControllerByAdmin,
+    temp
 }

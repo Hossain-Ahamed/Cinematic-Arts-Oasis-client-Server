@@ -1,5 +1,5 @@
 const express = require('express');
-const { FindTheProfileData, getThe_at_JWT, signInUploadDataController, UpdateUserProfileController, getAllUser, UpdateUserProfileControllerByAdmin } = require('../controller/UserHandle');
+const { FindTheProfileData, getThe_at_JWT, signInUploadDataController, UpdateUserProfileController, getAllUser, UpdateUserProfileControllerByAdmin, temp } = require('../controller/UserHandle');
 const { verifyJWT, veryifyByRole } = require('../Middleware/middlewares');
 const router = express.Router();
 
@@ -28,12 +28,14 @@ router.post('/sign-in-upload-data', signInUploadDataController)//==>deprecated
 router.patch('/update-user-profile/:email', verifyJWT,UpdateUserProfileController)
 
 
-// Update profile to all-user-colectio
+// Update profile to all-user-colection by admin
 router.patch('/update-user-profile-by-admin/:email', verifyJWT,veryifyByRole(["Admin"]),UpdateUserProfileControllerByAdmin)
 
 
 // admin -> get all users
 router.get('/all-users', verifyJWT,veryifyByRole(["Admin"]),getAllUser)
+
+// router.get('/bal',temp)
 
 //------------------------ get the jwt ---------------------------
 router.post('/jwt', getThe_at_JWT)
