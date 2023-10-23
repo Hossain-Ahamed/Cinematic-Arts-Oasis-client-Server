@@ -10,7 +10,7 @@ const getCart = async (req, res) => {
         }
 
 
-        const carts = await cartCollection.findOne({ email: req.params.email });
+    const carts = await cartCollection.findOne({ email: req.params.email });
         res.status(200).send(carts)
     } catch {
         e => {

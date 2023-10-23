@@ -1,7 +1,7 @@
 const express = require('express');
 
 const { verifyJWT, veryifyByRole } = require('../Middleware/middlewares');
-const { Add_A_New_Class, getallClasses, getClassDetailByClassID } = require('../controller/ClassController');
+const { Add_A_New_Class, getallClasses, getClassDetailByClassID, getclassListForAdmin_n_Instructor, getclassDetailForAdmin_n_Instructor, changeClassStatus } = require('../controller/ClassController');
 const router = express.Router();
 
 /**
@@ -24,6 +24,14 @@ router.get('/get-all-classes',getallClasses);
 router.get('/get-all-classes/:classID',getClassDetailByClassID);
 
 
+// classlist 
+router.get('/manage-classes/class-list',verifyJWT,veryifyByRole(["Admin","Instructor"]),getclassListForAdmin_n_Instructor)
+
+// class detail 
+router.get('/manage-classes/class-list/:classID',verifyJWT,veryifyByRole(["Admin","Instructor"]),getclassDetailForAdmin_n_Instructor)
+
+// chnage status of class 
+router.patch('/manage-classes/class-list/change-status/:classID',verifyJWT,veryifyByRole(["Admin"]),changeClassStatus)
 
 
 
