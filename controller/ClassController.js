@@ -78,7 +78,7 @@ const getClassDetailByClassID = async (req, res) => {
 
         const InstructorInfo = await allUserDataCollection.findOne(
             { email: classInfo?.email, role: "Instructor" },
-            { projection: { name: 1, photoURL: 1, phone: 1, _id: 1, genderr: 1, institute: 1, email: 1 } }
+            { projection: { name: 1, photoURL: 1, phone: 1, _id: 1, gender: 1, institute: 1, email: 1 } }
         );
         if (!InstructorInfo) {
             return res.status(404).send({ message: "Instructor No Longer Available" });
@@ -91,7 +91,7 @@ const getClassDetailByClassID = async (req, res) => {
 };
 
 
-//instructor detail
+//instructor detail 
 const getInstructorDetailByInstructorID = async (req, res) => {
     try {
         const insID = req.params.insID;
@@ -102,7 +102,7 @@ const getInstructorDetailByInstructorID = async (req, res) => {
                 role: "Instructor"
             },
 
-            { projection: { name: 1, photoURL: 1, phone: 1, _id: 1, genderr: 1, institute: 1, email: 1 } }
+            { projection: { name: 1, photoURL: 1, phone: 1, _id: 1, gender: 1, institute: 1, email: 1 } }
         );
         if (!InstructorInfo) {
             return res.status(404).send({ message: "Instructor No Longer Available" });
@@ -206,6 +206,13 @@ const changeClassStatus = async (req, res) => {
     }
 };
 
+
+
+// todo: admin user detail to user /admin controller
+
+
+// todo : isntructor and admin edit a course
+// insturctor only name and detail ,   admin and also price
 
 module.exports = {
     Add_A_New_Class,
