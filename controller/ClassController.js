@@ -1,5 +1,6 @@
 const process = require('process');
-const { classCollection, classInfoCollection } = require('../Mongo/DataCollection');
+const { classCollection, classInfoCollection, allUserDataCollection } = require('../Mongo/DataCollection');
+const { ObjectId } = require('mongodb');
 
 // add class by instructor 
 const Add_A_New_Class = async (req, res) => {
@@ -58,11 +59,71 @@ const getallClasses = async (req, res) => {
         res.status(200).send(data);
     } catch (error) {
         console.error('Error while getting the profile:', error);
-        res.status(500).send({ error: 'Internal server error FindTheProfileData' });
+        res.status(500).send({ error: 'Internal server error FindTheProfileData  || getallClasses' });
     }
 }
 
+
+//get specific class data controller
+const getClassDetailByClassID = async (req, res) => {
+    try {
+        const classID = req.params.classID;
+        const classInfo = await classCollection.findOne({ _id: new ObjectId(classID), status: "Approved" }, { projection: { UID: 0 } });
+        // console.log(72,classInfo)
+
+        if (!classInfo) {
+            // console.log(404)
+            return res.status(404).send({ message: "No class with this ID" });
+        }
+
+        const InstructorInfo = await allUserDataCollection.findOne(
+            { email: classInfo?.email, role: "Instructor" },
+            { projection: { name: 1, photoURL: 1, phone: 1, _id: 1, genderr: 1, institute: 1, email: 1 } }
+        );
+        if (!InstructorInfo) {
+            return res.status(404).send({ message: "Instructor No Longer Available" });
+        }
+
+        res.status(200).send({ classInfo, InstructorInfo });
+    } catch (error) {
+        res.status(500).send({ message: "Internal server error  || getClassDetailByClassID" });
+    }
+};
+
+
+//instructor detail
+const getInstructorDetailByInstructorID = async (req, res) => {
+    try {
+        const insID = req.params.insID;
+
+        const InstructorInfo = await allUserDataCollection.findOne(
+            {
+                _id: new ObjectId(insID),
+                role: "Instructor"
+            },
+
+            { projection: { name: 1, photoURL: 1, phone: 1, _id: 1, genderr: 1, institute: 1, email: 1 } }
+        );
+        if (!InstructorInfo) {
+            return res.status(404).send({ message: "Instructor No Longer Available" });
+        }
+
+        let  classInfo = [];
+        classInfo = await classCollection.find({email : InstructorInfo?.email, status: "Approved"}).sort({_id:-1}).toArray();
+        if (!classInfo) {
+            console.log(404)
+            return res.status(404).send({ message: "No class with this ID" });
+        }
+
+        res.status(200).send({ classInfo, InstructorInfo });
+    } catch (error) {
+        res.status(500).send({ message: "Internal server error  || getClassDetailByClassID" });
+    }
+};
+
 module.exports = {
     Add_A_New_Class,
-    getallClasses
+    getallClasses,
+    getClassDetailByClassID,
+    getInstructorDetailByInstructorID
 }

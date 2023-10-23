@@ -1,6 +1,7 @@
 const express = require('express');
 const { FindTheProfileData, getThe_at_JWT, signInUploadDataController, UpdateUserProfileController, getAllUser, UpdateUserProfileControllerByAdmin, temp, getAllInstructor, followInstructor } = require('../controller/UserHandle');
 const { verifyJWT, veryifyByRole } = require('../Middleware/middlewares');
+const { getInstructorDetailByInstructorID } = require('../controller/ClassController');
 const router = express.Router();
 
 /**
@@ -37,6 +38,12 @@ router.get('/all-users', verifyJWT,veryifyByRole(["Admin"]),getAllUser)
 
 // get all instructor for all 
 router.get('/get-all-instructors',getAllInstructor);
+
+
+
+// get instructor  detail for all 
+router.get('/get-all-instructors/:insID',getInstructorDetailByInstructorID);
+
 
 // follow unfollow 
 router.patch('/followings',verifyJWT,veryifyByRole(['Student']),followInstructor);

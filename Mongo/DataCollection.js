@@ -14,6 +14,18 @@ const cartCollection = getCollection('carts-data')
 //class collection
 const classCollection = getCollection('class-data')
 
-const classInfoCollection = getCollection('class-info') 
 
-module.exports = { allUserDataCollection,cartCollection,classCollection ,classInfoCollection,followCollection};
+//store all the class of the teacher
+const classInfoCollection = getCollection('class-info');
+
+//store all the students of a class
+const enrolledStudentOfClassCollection = getCollection('enrolled-student-by-class')
+
+module.exports = {
+    allUserDataCollection,
+    cartCollection,
+    classCollection,
+    classInfoCollection,
+    enrolledStudentOfClassCollection,
+    followCollection
+};
