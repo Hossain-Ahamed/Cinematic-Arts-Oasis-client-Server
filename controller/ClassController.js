@@ -1,5 +1,5 @@
 const process = require('process');
-const { classCollection, classInfoCollection, allUserDataCollection } = require('../Mongo/DataCollection');
+const { classCollection, classInfoCollection, allUserDataCollection, enrolledStudentOfClassCollection } = require('../Mongo/DataCollection');
 const { ObjectId } = require('mongodb');
 
 // add class by instructor 
@@ -64,7 +64,7 @@ const getallClasses = async (req, res) => {
 }
 
 
-//get specific class data controller
+//get specific class data controller for home page
 const getClassDetailByClassID = async (req, res) => {
     try {
         const classID = req.params.classID;
@@ -167,11 +167,49 @@ const getclassDetailForAdmin_n_Instructor = async (req, res) => {
         if (userRole !== "Admin" && userEmail !== classData?.email) {
             return res.status(404).send({ message: "No data " });
         }
-        res.status(200).send(classData);
+
+        let projection = {
+            _id: 1,
+            std_ID: 1,
+            stdName: 1,
+            stdEmail: 1,
+            stdUID: 1,
+
+            Joindate: 1,
+        };
+
+        if (userRole === "Admin") {
+            projection = {
+                _id: 1,
+                std_ID: 1,
+                stdName: 1,
+                stdEmail: 1,
+                stdUID: 1,
+
+                Joindate: 1,
+                transaction_method_email: 1,
+                transaction_method_name: 1,
+                transaction_method_phone: 1,
+                transactionID: 1,
+                intent_methodID: 1,
+                methodID: 1,
+                price: 1,
+            }
+        }
+
+        const students = await enrolledStudentOfClassCollection
+            .find({ class_ID: classData?._id.toString() })
+            .sort({ _id: -1 })
+            .project({ ...projection })
+            .toArray();
+
+        res.status(200).send({ classData, students });
     } catch (error) {
+        console.error(203, error)
         res.status(500).send({ message: "Internal server error || getclassListForAdmin_n_Instructor" });
     }
 };
+
 
 
 //change status of class by admin
@@ -180,7 +218,7 @@ const changeClassStatus = async (req, res) => {
         const classID = req.params.classID;
         let { status } = req.body;
         const userRole = req?.data?.role;
-    
+
 
         if (userRole !== "Admin") {
             return res.status(401).send({ message: "Unauthorized: Only Admin can change class status" });
@@ -197,7 +235,7 @@ const changeClassStatus = async (req, res) => {
         if (result.matchedCount === 1 && result.modifiedCount === 1) {
             res.status(200).send({ message: "Class status updated successfully" });
         } else {
-      
+
             res.status(404).send({ message: "Class not found or status not updated" });
         }
     } catch (error) {
@@ -207,6 +245,26 @@ const changeClassStatus = async (req, res) => {
 };
 
 
+//kick out a student from class by admin
+const handleKickOutFromClass = async (req, res) => {
+    try {
+        if (req.data?.role !== "Admin") {
+            return res.status(401).send({ message: "unauthorized, not an Admin" })
+        }
+        const ID = req.params.dataID;
+        const result = await enrolledStudentOfClassCollection.deleteOne({ _id: new ObjectId(ID) });
+        if (result.deletedCount) {
+            res.status(200).send({ message: "Removed From class" })
+        } else {
+            res.status(400).send({ message: "Failed" })
+        }
+
+    } catch (e) {
+        console.log(e);
+        // Bad Request: Server error or client sent an invalid request
+        res.status(500).send({ message: "Bad Request: handleKickOutFromClass Server error or invalid request" });
+    }
+}
 
 // todo: admin user detail to user /admin controller
 
@@ -221,6 +279,7 @@ module.exports = {
     getInstructorDetailByInstructorID,
     getclassListForAdmin_n_Instructor,
     getclassDetailForAdmin_n_Instructor,
-    changeClassStatus
+    changeClassStatus,
+    handleKickOutFromClass
 
 }

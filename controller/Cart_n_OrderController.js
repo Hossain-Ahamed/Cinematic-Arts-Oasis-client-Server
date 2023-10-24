@@ -35,12 +35,22 @@ const getDetailCart = async (req, res) => {
         const cart = await cartCollection.findOne({ email: requestedEmail });
 
         if (cart) {
+            // Filter out classes that the user has already enrolled in
+            const filteredItems = await Promise.all(cart.items.filter(async (classId) => {
+                const isEnrolled = await enrolledStudentOfClassCollection.findOne({ stdEmail: requestedEmail, class_ID: classId });
+                if (isEnrolled) {
+                    // Remove the class from the cart
+                    await cartCollection.updateOne({ email: requestedEmail }, { $pull: { items: classId } });
+                    return false;
+                }
+                return true;
+            }));
+
             // Map the array of class _id values to class details
-            const itemDetails = await Promise.all(cart.items.map(async (classId) => {
+            const itemDetails = await Promise.all(filteredItems.map(async (classId) => {
                 const classDetail = await classCollection.findOne({ _id: new ObjectId(classId) });
                 return classDetail;
             }));
-
 
             // Update the cart object to include the detailed item information
             const cartWithItemDetails = {
@@ -57,6 +67,7 @@ const getDetailCart = async (req, res) => {
         res.status(500).send({ message: "Internal server error" });
     }
 };
+
 
 
 // add in cart
@@ -150,7 +161,6 @@ const detailOfTheItemOfIndividialItem = async (req, res) => {
 
 
         const exist = await enrolledStudentOfClassCollection.findOne({ stdEmail: RequsetedEmail, class_ID: cartItemID });
-
         if (exist) {
             return res.status(409).send({ message: "You are already enrolled in this class" });
         }
@@ -246,6 +256,7 @@ const EnrollToClass = async (req, res) => {
         } = req.body;
 
         const exist = await enrolledStudentOfClassCollection.findOne({ stdEmail: stdEmail, class_ID: class_ID });
+
         if (exist) {
             return res.status(409).send({ message: "You are already enrolled in this class" });
         }
@@ -282,6 +293,9 @@ const EnrollToClass = async (req, res) => {
                     $pull: { items: class_ID }
                 });
 
+            await classCollection.updateOne({ _id: new ObjectId(class_ID) },
+                { $inc: { availableSeats: -1 } });
+
             return res.status(200).send({ message: "Document inserted successfully" });
         } else {
             // Conflict: Insertion failed due to a client-related issue (e.g., duplicate data)
@@ -293,6 +307,8 @@ const EnrollToClass = async (req, res) => {
         res.status(500).send({ message: "Bad Request: Server error or invalid request" });
     }
 };
+
+
 
 
 module.exports = {

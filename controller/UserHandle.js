@@ -132,7 +132,6 @@ const UpdateUserProfileControllerByAdmin = async (req, res) => {
 
         const prevData = await allUserDataCollection.findOne({ email: email });
 
-        console.log(data.role, prevData?.role)
         if (data.role !== prevData?.role) {
             if (data.role === 'Admin' || data.role === 'Instructor') {
                 // If the role is 'Admin' or 'Instructor', remove 'following' and 'cartID' from the user's document
@@ -223,7 +222,6 @@ const getAllUser = async (req, res) => {
 // ------- get jwt 
 const getThe_at_JWT = async (req, res) => {
     const { name, email, photoURL, phone, firebase_UID } = req.body;
-    // console.log("jwt", req.body);
     let userDataForJWT = await allUserDataCollection.findOne({ email: email });
 
     if (!userDataForJWT) {
@@ -265,29 +263,49 @@ const getThe_at_JWT = async (req, res) => {
 //follow isntructor
 const followInstructor = async (req, res) => {
 
-    const { insID, type,_id } = req.body;
+    const { insID, type, _id } = req.body;
     const data = {
-        stdID : _id,
-        insID : insID
+        stdID: _id,
+        insID: insID
     }
     if (type === "follow") {
-        await allUserDataCollection.updateOne({_id : new ObjectId(_id), role: "Student"}, 
-        {
-            $push : {following : insID }
-        })
+        await allUserDataCollection.updateOne({ _id: new ObjectId(_id), role: "Student" },
+            {
+                $push: { following: insID }
+            })
 
-        
+
 
         await followCollection.insertOne(data)
     } else {
-        await allUserDataCollection.updateOne({_id : new ObjectId(_id), role: "Student"}, 
-        {
-            $pull : {following : insID }
-        })
+        await allUserDataCollection.updateOne({ _id: new ObjectId(_id), role: "Student" },
+            {
+                $pull: { following: insID }
+            })
 
         await followCollection.deleteMany(data)
     }
-res.status(200).send('true')
+    res.status(200).send('true')
+}
+
+//get all followed instructor 
+const getAllFollowedInstructor = async (req, res) => {
+    try {
+       
+        const { following } = await allUserDataCollection.findOne({ email: req.data?.email }, { projection: { _id: 1, following: 1 } });
+       
+        if (!following || !Array.isArray(following)) {
+            return res.status(404).send({ message: "no one found" })
+        }
+
+        const mongoID = following.map(id => new ObjectId(id));
+
+        const result = await allUserDataCollection.find({ _id: { $in: mongoID } }).sort({_id:-1}).toArray();
+        return res.status(200).send(result)
+
+    } catch (e) {
+        res.status(500).send({ message: "internal server error getallfollwedinstructor" })
+    }
 }
 
 const temp = async (req, res) => {
@@ -322,7 +340,6 @@ const temp = async (req, res) => {
         // Wait for all promises to complete
         await Promise.all(promises);
 
-        console.log('Process completed.');
         res.send("hdsjafhhsd")
     } catch (err) {
         console.error('Error:', err);
@@ -340,5 +357,6 @@ module.exports = {
     UpdateUserProfileControllerByAdmin,
     getAllInstructor,
     followInstructor,
+    getAllFollowedInstructor,
     temp
 }

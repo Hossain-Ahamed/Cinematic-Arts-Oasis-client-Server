@@ -1,7 +1,7 @@
 const express = require('express');
 
 const { verifyJWT, veryifyByRole } = require('../Middleware/middlewares');
-const { Add_A_New_Class, getallClasses, getClassDetailByClassID, getclassListForAdmin_n_Instructor, getclassDetailForAdmin_n_Instructor, changeClassStatus } = require('../controller/ClassController');
+const { Add_A_New_Class, getallClasses, getClassDetailByClassID, getclassListForAdmin_n_Instructor, getclassDetailForAdmin_n_Instructor, changeClassStatus, handleKickOutFromClass } = require('../controller/ClassController');
 const router = express.Router();
 
 /**
@@ -31,7 +31,9 @@ router.get('/manage-classes/class-list',verifyJWT,veryifyByRole(["Admin","Instru
 router.get('/manage-classes/class-list/:classID',verifyJWT,veryifyByRole(["Admin","Instructor"]),getclassDetailForAdmin_n_Instructor)
 
 // chnage status of class 
-router.patch('/manage-classes/class-list/change-status/:classID',verifyJWT,veryifyByRole(["Admin"]),changeClassStatus)
+router.patch('/manage-classes/class-list/change-status/:classID',verifyJWT,veryifyByRole(["Admin"]),changeClassStatus);
+
+router.delete('/kick-out-from-class/:dataID',verifyJWT,veryifyByRole(['Admin']),handleKickOutFromClass)
 
 
 
