@@ -211,6 +211,40 @@ const getclassDetailForAdmin_n_Instructor = async (req, res) => {
 };
 
 
+//get all the class as payment history for student
+const get_Class_as_paymentHistory_ForSTUDENT = async (req, res) => {
+    try {
+
+        let projection = {
+            _id: 1,
+            clssName: 1,
+            class_ID: 1,
+            Joindate: 1,
+            InstructorName: 1,
+            transaction_method_email: 1,
+            transaction_method_name: 1,
+            transaction_method_phone: 1,
+            transactionID: 1,
+            intent_methodID: 1,
+            methodID: 1,
+            price: 1,
+        };
+
+        const classes = await enrolledStudentOfClassCollection
+            .find({ stdEmail: req.data?.email })
+            .sort({ _id: -1 })
+            .project({ ...projection })
+            .toArray();
+
+        res.status(200).send(classes);
+    } catch (error) {
+        console.error(error)
+        res.status(500).send({ message: "Internal server error || get_Class_as_paymentHistory_ForSTUDENT" });
+    }
+};
+
+
+
 
 //change status of class by admin
 const changeClassStatus = async (req, res) => {
@@ -280,6 +314,7 @@ module.exports = {
     getclassListForAdmin_n_Instructor,
     getclassDetailForAdmin_n_Instructor,
     changeClassStatus,
-    handleKickOutFromClass
+    handleKickOutFromClass,
+    get_Class_as_paymentHistory_ForSTUDENT
 
 }
