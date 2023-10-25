@@ -300,6 +300,110 @@ const handleKickOutFromClass = async (req, res) => {
     }
 }
 
+const getAllMyPurchasesClasses_For_Student = async (req, res) => {
+    try {
+        const studentEmail = req.data?.email;
+      
+
+        if (!studentEmail) {
+            return res.status(401).send({ message: "Unauthorized" });
+        }
+
+        // const pipeline = [
+        //     {
+        //         $match: { stdEmail: studentEmail }
+        //     },
+        //     {
+        //         $project: {
+        //             class_ID: { $toObjectId: "$class_ID" } ,// Convert class_ID to ObjectId
+        //             stdEmail : 1,
+        //             std_ID : 1,
+        //             Joindate :1
+        //         }
+        //     },
+        //     {
+        //         $lookup: {
+        //             from: 'class-data',
+        //             localField: "class_ID",
+        //             foreignField: "_id",
+        //             as: "classData"
+        //         },
+                
+        //     },
+        //     {
+        //         $sort: { _id: -1 }
+        //     }
+        // ];
+
+
+        const pipeline = [
+            {
+                $match: { stdEmail: studentEmail }
+            },
+            {
+                $project: {
+                    class_ID: { $toObjectId: "$class_ID" }, // Convert class_ID to ObjectId
+                    clssName :1,
+                    Joindate: 1,
+                    InstructorName:1,
+                }
+            },
+            {
+                $lookup: {
+                    from: 'class-data',
+                    let: { classId: "$class_ID" }, // Create a variable for the class_ID
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: ["$_id", "$$classId"]
+                                }
+                            }
+                        },
+                        {
+                            $project: {
+                                videoURL: 1 ,// Include only className from the foreign collection
+                                photoURL: 1, // Include only className from the foreign collection
+                    
+
+                            }
+                        }
+                    ],
+                    as: "classData"
+                }
+            },
+            {
+                $sort: { _id: -1 }
+            }
+        ];
+
+        // Debug log: Output the pipeline to ensure it's correct
+        // console.log("Aggregation Pipeline:", JSON.stringify(pipeline, null, 2));
+
+        const classes = await enrolledStudentOfClassCollection.aggregate(pipeline).toArray();
+
+        // Debug log: Output the result of the aggregation
+        // console.log("Aggregation Result:", JSON.stringify(classes, null, 2));
+
+        if (classes && classes.length > 0) {
+            // You have retrieved the purchased classes with additional data from classCollection.
+            res.status(200).send(classes);
+        } else {
+            console.log('No purchased classes found');
+            // If no classes are found, you can send an appropriate message.
+            res.status(404).send({ message: "No purchased classes found" });
+        }
+
+
+      
+    } catch (e) {
+        console.error(e);
+        // Bad Request: Server error or client sent an invalid request
+        res.status(500).send({ message: "Bad Request: getAllMyPurchasesClasses_For_Student Server error or invalid request" });
+    }
+}
+
+
 // todo: admin user detail to user /admin controller
 
 
@@ -315,6 +419,7 @@ module.exports = {
     getclassDetailForAdmin_n_Instructor,
     changeClassStatus,
     handleKickOutFromClass,
-    get_Class_as_paymentHistory_ForSTUDENT
+    get_Class_as_paymentHistory_ForSTUDENT,
+    getAllMyPurchasesClasses_For_Student
 
 }

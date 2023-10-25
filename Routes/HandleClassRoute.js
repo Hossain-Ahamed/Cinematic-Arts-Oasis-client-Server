@@ -1,7 +1,7 @@
 const express = require('express');
 
 const { verifyJWT, veryifyByRole } = require('../Middleware/middlewares');
-const { Add_A_New_Class, getallClasses, getClassDetailByClassID, getclassListForAdmin_n_Instructor, getclassDetailForAdmin_n_Instructor, changeClassStatus, handleKickOutFromClass, get_Class_as_paymentHistory_ForSTUDENT } = require('../controller/ClassController');
+const { Add_A_New_Class, getallClasses, getClassDetailByClassID, getclassListForAdmin_n_Instructor, getclassDetailForAdmin_n_Instructor, changeClassStatus, handleKickOutFromClass, get_Class_as_paymentHistory_ForSTUDENT, getAllMyPurchasesClasses_For_Student } = require('../controller/ClassController');
 const router = express.Router();
 
 /**
@@ -39,7 +39,10 @@ router.delete('/kick-out-from-class/:dataID', verifyJWT, veryifyByRole(['Admin']
 
 
 //student visit his payment history
-router.get('/get-my-payment-history', verifyJWT, veryifyByRole(["Student"]), get_Class_as_paymentHistory_ForSTUDENT)
+router.get('/get-my-payment-history', verifyJWT, veryifyByRole(["Student"]), get_Class_as_paymentHistory_ForSTUDENT);
+
+//get all my purchased class list 
+router.get('/student-panel/my-class-list', verifyJWT, veryifyByRole(["Student"]), getAllMyPurchasesClasses_For_Student);
 
 
 module.exports = router;
