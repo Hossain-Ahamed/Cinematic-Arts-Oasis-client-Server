@@ -308,6 +308,26 @@ const getAllFollowedInstructor = async (req, res) => {
     }
 }
 
+//get user detail for admin 
+const userDetailViewForAdmin = async(req,res)=>{
+    try{
+        const userID = req.params.userID;
+        if(!userID){
+           return res.status(400).send({message: "no user id send "})
+        }
+        const userData = await allUserDataCollection.findOne({_id : new ObjectId(userID)});
+        if(!userData){
+           return res.status(404).send({message: "no user found"})
+        }
+
+        
+        res.status(200).send(userData)
+
+    }catch(e){
+        res.status(500).send({message : "server error occured at userDetailViewForAdmin"})
+    }
+}
+
 const temp = async (req, res) => {
     try {
         // Fetch all user data from the userCollection
@@ -358,5 +378,6 @@ module.exports = {
     getAllInstructor,
     followInstructor,
     getAllFollowedInstructor,
+    userDetailViewForAdmin,
     temp
 }
