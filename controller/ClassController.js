@@ -48,11 +48,38 @@ const Add_A_New_Class = async (req, res) => {
 }
 
 
+// update a class 
+const updateAClass = async (req, res) => {
+    try {
+        const classID = req.params.classID
+        const data = req.body;
+
+        // Check if the class already exists by email and className
+        const exist = await classCollection.findOne({ email: data?.email, className: data?.className });
+        if (exist) {
+            return res.status(409).send({ message: "Class Already Exists by this name" });
+        }
+
+        await classCollection.updateOne({ _id: new ObjectId(classID) }, { $set: data })
+
+
+        await enrolledStudentOfClassCollection.updateMany({ class_ID: classID }, {
+            $set: { className: req?.body?.className }
+        })
+        res.status(200).send({message : "updated"})
+    } catch (error) {
+        console.error('Error while adding a new class:', error);
+        res.status(500).send({ error: 'Internal server error' });
+    }
+}
+
+
+
 
 const getallClasses = async (req, res) => {
     try {
 
-  
+
         const data = await classCollection.find({ status: "Approved" }).sort({ _id: -1 }).toArray();
 
 
@@ -211,6 +238,23 @@ const getclassDetailForAdmin_n_Instructor = async (req, res) => {
 };
 
 
+
+
+
+//get class detail for  instryctor to edit
+const getclassDetailForInstructorForedit = async (req, res) => {
+    try {
+        const classID = req.params.classID;
+
+
+        const classData = await classCollection.findOne({ _id: new ObjectId(classID) });
+        res.status(200).send(classData);
+    } catch (error) {
+        console.error(203, error)
+        res.status(500).send({ message: "Internal server error || getclassListForAdmin_n_Instructor" });
+    }
+};
+
 //get all the class as payment history for student
 const get_Class_as_paymentHistory_ForSTUDENT = async (req, res) => {
     try {
@@ -303,7 +347,7 @@ const handleKickOutFromClass = async (req, res) => {
 const getAllMyPurchasesClasses_For_Student = async (req, res) => {
     try {
         const studentEmail = req.data?.email;
-      
+
 
         if (!studentEmail) {
             return res.status(401).send({ message: "Unauthorized" });
@@ -328,7 +372,7 @@ const getAllMyPurchasesClasses_For_Student = async (req, res) => {
         //             foreignField: "_id",
         //             as: "classData"
         //         },
-                
+
         //     },
         //     {
         //         $sort: { _id: -1 }
@@ -343,9 +387,9 @@ const getAllMyPurchasesClasses_For_Student = async (req, res) => {
             {
                 $project: {
                     class_ID: { $toObjectId: "$class_ID" }, // Convert class_ID to ObjectId
-                    className :1,
+                    className: 1,
                     Joindate: 1,
-                    InstructorName:1,
+                    InstructorName: 1,
                 }
             },
             {
@@ -362,9 +406,9 @@ const getAllMyPurchasesClasses_For_Student = async (req, res) => {
                         },
                         {
                             $project: {
-                                videoURL: 1 ,// Include only className from the foreign collection
+                                videoURL: 1,// Include only className from the foreign collection
                                 photoURL: 1, // Include only className from the foreign collection
-                    
+
 
                             }
                         }
@@ -395,7 +439,7 @@ const getAllMyPurchasesClasses_For_Student = async (req, res) => {
         }
 
 
-      
+
     } catch (e) {
         console.error(e);
         // Bad Request: Server error or client sent an invalid request
@@ -403,8 +447,6 @@ const getAllMyPurchasesClasses_For_Student = async (req, res) => {
     }
 }
 
-
-// todo: admin user detail to user /admin controller
 
 
 // todo : isntructor and admin edit a course
@@ -420,6 +462,8 @@ module.exports = {
     changeClassStatus,
     handleKickOutFromClass,
     get_Class_as_paymentHistory_ForSTUDENT,
-    getAllMyPurchasesClasses_For_Student
+    getAllMyPurchasesClasses_For_Student,
+    getclassDetailForInstructorForedit,
+    updateAClass
 
 }

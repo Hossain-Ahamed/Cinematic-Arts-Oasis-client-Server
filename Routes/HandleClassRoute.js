@@ -1,7 +1,7 @@
 const express = require('express');
 
 const { verifyJWT, veryifyByRole } = require('../Middleware/middlewares');
-const { Add_A_New_Class, getallClasses, getClassDetailByClassID, getclassListForAdmin_n_Instructor, getclassDetailForAdmin_n_Instructor, changeClassStatus, handleKickOutFromClass, get_Class_as_paymentHistory_ForSTUDENT, getAllMyPurchasesClasses_For_Student } = require('../controller/ClassController');
+const { Add_A_New_Class, getallClasses, getClassDetailByClassID, getclassListForAdmin_n_Instructor, getclassDetailForAdmin_n_Instructor, changeClassStatus, handleKickOutFromClass, get_Class_as_paymentHistory_ForSTUDENT, getAllMyPurchasesClasses_For_Student, getclassDetailForInstructorForedit, updateAClass } = require('../controller/ClassController');
 const router = express.Router();
 
 /**
@@ -29,6 +29,11 @@ router.get('/manage-classes/class-list', verifyJWT, veryifyByRole(["Admin", "Ins
 
 // class detail 
 router.get('/manage-classes/class-list/:classID', verifyJWT, veryifyByRole(["Admin", "Instructor"]), getclassDetailForAdmin_n_Instructor)
+
+//get data for edit a class for instructor
+router.get('/my-classes/:classID/edit', verifyJWT, veryifyByRole(["Instructor"]), getclassDetailForInstructorForedit);
+router.patch('/my-classes/:classID/edit', verifyJWT, veryifyByRole(["Instructor"]), updateAClass);
+
 
 // chnage status of class 
 router.patch('/manage-classes/class-list/change-status/:classID', verifyJWT, veryifyByRole(["Admin"]), changeClassStatus);
