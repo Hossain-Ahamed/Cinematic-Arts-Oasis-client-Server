@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const process = require('process');
-const { allUserDataCollection, cartCollection, classInfoCollection, followCollection } = require('../Mongo/DataCollection');
+const { allUserDataCollection, cartCollection, classInfoCollection, followCollection, enrolledStudentOfClassCollection, classCollection } = require('../Mongo/DataCollection');
 const { ObjectId } = require('mongodb');
 
 
@@ -288,43 +288,183 @@ const followInstructor = async (req, res) => {
     res.status(200).send('true')
 }
 
-//get all followed instructor 
 const getAllFollowedInstructor = async (req, res) => {
     try {
-       
-        const { following } = await allUserDataCollection.findOne({ email: req.data?.email }, { projection: { _id: 1, following: 1 } });
-       
-        if (!following || !Array.isArray(following)) {
-            return res.status(404).send({ message: "no one found" })
-        }
 
-        const mongoID = following.map(id => new ObjectId(id));
-
-        const result = await allUserDataCollection.find({ _id: { $in: mongoID } }).sort({_id:-1}).toArray();
-        return res.status(200).send(result)
+        const result = await getAllFOllowedInstructorByStudentFunction(req.data?.email);
+        return res.status(200).send(result);
 
     } catch (e) {
         res.status(500).send({ message: "internal server error getallfollwedinstructor" })
     }
 }
 
+//followers of instructor
+const getAllFollowers_Of_Instructor = async (req, res) => {
+    try {
+        const ID = req.params._id;
+        const result = await getFollowerOFInstructor(ID)
+        return res.status(200).send(result);
+
+    } catch (e) {
+        res.status(500).send({ message: "internal server error getallfollwedinstructor" })
+    }
+}
+
+//get all followed instructor function for A student
+const getAllFOllowedInstructorByStudentFunction = async StudentEmail => {
+    try {
+
+        const { following } = await allUserDataCollection.findOne({ email: StudentEmail }, { projection: { _id: 1, following: 1 } });
+
+        if (!following || !Array.isArray(following)) {
+            return res.status(404).send({ message: "no one found" })
+        }
+
+        const mongoID = following.map(id => new ObjectId(id));
+
+        const result = await allUserDataCollection.find({ _id: { $in: mongoID } }).sort({ _id: -1 }).toArray();
+        return result;
+
+    } catch (e) {
+        res.status(500).send({ message: "internal server error getallfollwedinstructor" })
+    }
+}
+
+
+// get all the followers of instructor 
+const getFollowerOFInstructor = async (insIDToMatch) => {
+    // Assuming userData?._id contains the specific insID you want to match
+
+    const followPipeline = [
+        {
+            $match: { insID: insIDToMatch }
+        },
+        {
+            $project: {
+                stdID: { $toObjectId: "$stdID" }, // Convert stdID to ObjectId
+                insID: { $toObjectId: "$insID" }, // Convert insID to ObjectId
+                _id: 1
+            }
+        },
+        {
+            $lookup: {
+                from: "all-user-data",
+                localField: "stdID",
+                foreignField: "_id",
+                as: "followData"
+            }
+        },
+        {
+            $unwind: "$followData" //unwind the follow data array
+        },
+        {
+            $project: {
+                _id: "$followData._id",
+                name: "$followData.name",
+                phone: "$followData.phone",
+                email: "$followData.email",
+                firebase_UID: "$followData.firebase_UID",
+
+            }
+        },
+
+    ];
+
+    const followers = await followCollection.aggregate(followPipeline).toArray();
+
+    return followers;
+
+}
+
+
+
 //get user detail for admin 
-const userDetailViewForAdmin = async(req,res)=>{
-    try{
+const userDetailViewForAdmin = async (req, res) => {
+    try {
         const userID = req.params.userID;
-        if(!userID){
-           return res.status(400).send({message: "no user id send "})
+        if (!userID) {
+            return res.status(400).send({ message: "no user id send " })
         }
-        const userData = await allUserDataCollection.findOne({_id : new ObjectId(userID)});
-        if(!userData){
-           return res.status(404).send({message: "no user found"})
+        const userData = await allUserDataCollection.findOne({ _id: new ObjectId(userID) });
+        if (!userData) {
+            return res.status(404).send({ message: "no user found" })
         }
 
-        
-        res.status(200).send(userData)
+        let othersData = {};
 
-    }catch(e){
-        res.status(500).send({message : "server error occured at userDetailViewForAdmin"})
+        if (userData?.role === "Instructor") {
+
+
+
+            //get taken class of instuctor
+            const takenClasses = await classCollection.find({ email: userData?.email })
+                .sort({ _id: -1 })
+                .project({
+                    _id: 1,
+                    className: 1,
+                    CoursePrice: 1,
+                    availableSeats: 1,
+                    status: 1,
+                    name: 1,
+                    email: 1,
+                })
+                .toArray();
+
+
+            othersData.takenClasses = takenClasses;
+
+
+
+
+
+            // get teacher follower 
+            const followers = await getFollowerOFInstructor(userData?._id.toString());
+            othersData.followers = followers;
+
+
+
+
+        } else if (userData?.role === "Admin") {
+            //nothing 
+
+        } else if (userData?.role === "Student") {
+
+            //get taken class of instuctor
+            const takenClasses = await enrolledStudentOfClassCollection.find({ stdEmail: userData?.email })
+                .sort({ _id: -1 })
+                .project({
+                    _id: 1,
+                    className: 1,
+                    price: 1,
+                    InstructorName: 1,
+                    InstructorEmail: 1,
+                    Joindate: 1,
+                    transactionID: 1,
+                    class_ID: 1,
+                })
+                .toArray();
+            othersData.takenClasses = takenClasses;
+
+
+
+            //followings of that student 
+            const followings = await getAllFOllowedInstructorByStudentFunction(userData?.email);
+            othersData.followings = followings;
+
+
+
+
+        } else {
+            othersData.message = "No role was found";
+        }
+
+
+        res.status(200).send({ userData, othersData })
+
+    } catch (e) {
+        console.error(e)
+        res.status(500).send({ message: "server error occured at userDetailViewForAdmin" })
     }
 }
 
@@ -379,5 +519,6 @@ module.exports = {
     followInstructor,
     getAllFollowedInstructor,
     userDetailViewForAdmin,
+    getAllFollowers_Of_Instructor,
     temp
 }

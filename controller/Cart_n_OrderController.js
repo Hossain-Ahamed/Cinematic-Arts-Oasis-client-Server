@@ -232,7 +232,7 @@ const CreatePaymentIntent = async (req, res) => {
 };
 
 
-//enroll to new clss
+//enroll to new class
 const EnrollToClass = async (req, res) => {
     try {
         const {
@@ -243,7 +243,7 @@ const EnrollToClass = async (req, res) => {
             InstructorName,
             InstructorEmail,
             InstructorUID,
-            clssName,
+            className,
             class_ID,
             transaction_method_email,
             transaction_method_name,
@@ -269,7 +269,7 @@ const EnrollToClass = async (req, res) => {
             InstructorName,
             InstructorEmail,
             InstructorUID,
-            clssName,
+            className,
             class_ID,
             transaction_method_email,
             transaction_method_name,

@@ -1,5 +1,5 @@
 const express = require('express');
-const { FindTheProfileData, getThe_at_JWT, signInUploadDataController, UpdateUserProfileController, getAllUser, UpdateUserProfileControllerByAdmin, temp, getAllInstructor, followInstructor, getAllFollowedInstructor, userDetailViewForAdmin } = require('../controller/UserHandle');
+const { FindTheProfileData, getThe_at_JWT, signInUploadDataController, UpdateUserProfileController, getAllUser, UpdateUserProfileControllerByAdmin, temp, getAllInstructor, followInstructor, getAllFollowedInstructor, userDetailViewForAdmin, getAllFollowers_Of_Instructor } = require('../controller/UserHandle');
 const { verifyJWT, veryifyByRole } = require('../Middleware/middlewares');
 const { getInstructorDetailByInstructorID } = require('../controller/ClassController');
 const router = express.Router();
@@ -54,7 +54,10 @@ router.patch('/followings',verifyJWT,veryifyByRole(['Student']),followInstructor
 // get all followed instructor 
 router.get('/get-all-followed-instructors',verifyJWT,veryifyByRole(['Student']),getAllFollowedInstructor)
 
-// router.get('/bal',temp)
+
+// get all follower of an  instructor 
+router.get('/get-my-followers/:_id',verifyJWT,veryifyByRole(['Instructor']),getAllFollowers_Of_Instructor)
+
 
 //------------------------ get the jwt ---------------------------
 router.post('/jwt', getThe_at_JWT)

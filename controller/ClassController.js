@@ -52,7 +52,7 @@ const Add_A_New_Class = async (req, res) => {
 const getallClasses = async (req, res) => {
     try {
 
-
+  
         const data = await classCollection.find({ status: "Approved" }).sort({ _id: -1 }).toArray();
 
 
@@ -217,7 +217,7 @@ const get_Class_as_paymentHistory_ForSTUDENT = async (req, res) => {
 
         let projection = {
             _id: 1,
-            clssName: 1,
+            className: 1,
             class_ID: 1,
             Joindate: 1,
             InstructorName: 1,
@@ -343,7 +343,7 @@ const getAllMyPurchasesClasses_For_Student = async (req, res) => {
             {
                 $project: {
                     class_ID: { $toObjectId: "$class_ID" }, // Convert class_ID to ObjectId
-                    clssName :1,
+                    className :1,
                     Joindate: 1,
                     InstructorName:1,
                 }
