@@ -447,11 +447,6 @@ const getAllMyPurchasesClasses_For_Student = async (req, res) => {
     }
 }
 
-
-
-// todo : isntructor and admin edit a course
-// insturctor only name and detail ,   admin and also price
-
 module.exports = {
     Add_A_New_Class,
     getallClasses,
